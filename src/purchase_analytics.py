@@ -2,8 +2,8 @@
 from __future__ import print_function
 import os, sys
     
-def check_files():
-    with open('output_file.csv', 'w') as f:
+def check_files(order_file_path,products_file_path,output_file_path):
+    with open(output_file_path, 'w') as f:
         f.write("department_id,number_of_orders,number_of_first_orders,percentage\n")
 
 def get_products_dict(file_path,verbose=0,print_error=1):
@@ -115,7 +115,7 @@ def main():
     
     #os.chdir(r"C:\Users\Troti\Desktop\Insight\Coding\MainDirectory")
     
-    check_files()
+    check_files(order_file_path,products_file_path,output_file_path)
     
     product_dict = get_products_dict(products_file_path)
     
