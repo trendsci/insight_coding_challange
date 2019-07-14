@@ -1,6 +1,6 @@
 ## analysis
 from __future__ import print_function
-import os
+import os, sys
     
 def check_files():
     with open('output_file.csv', 'w') as f:
@@ -72,13 +72,12 @@ def assign_product_dept(product_dict, order_file_path, output_file_path, verbose
             data = department_order_dict[key]
             to_write = "{},{},{},{}\n".format(key, data[0],data[1],data[2])
             try:
-                with open("output_file.csv", 'a+') as output_file:
+                with open(output_file_path, 'a+') as output_file:
                     if verbose: print(to_write)
                     output_file.write(to_write)
             except Exception as e:
-                print(e)
                 print("No file yet")
-                with open("output_file.csv", 'w') as output_file:
+                with open(output_file_path, 'w') as output_file:
                     output_file.write(to_write)
                 
         return department_order_dict
@@ -91,17 +90,30 @@ def assign_product_dept(product_dict, order_file_path, output_file_path, verbose
         
         
 def main():
-    print("Started")
+
+    # Set up file paths from command line or predefined in script.
+    try:
+        order_file_path = sys.argv[1]
+    except:
+        print("eeeeeeeeeeeee")
+        order_file_path = "order_products.csv"
+        #order_file_path = "Big\order_products__train.csv"
+        #order_file_path = "Big\order_products__prior.csv"
+        
+    try:
+        products_file_path = sys.argv[2]
+    except:
+        print("eeeeeeeeeeeee")
+        products_file_path = "Big\products.csv" #"products.csv" 
+
+    try:
+        output_file_path = sys.argv[3]
+        
+    except:
+        print("eeee")
+        output_file_path = "output_file.csv"
     
-    products_file_path = "Big\products.csv" #"products.csv" 
-    
-    #order_file_path = "order_products.csv"
-    order_file_path = "Big\order_products__train.csv"
-    #order_file_path = "Big\order_products__prior.csv"
-    
-    output_file_path = "output_file.csv"
-    
-    os.chdir(r"C:\Users\Troti\Desktop\Insight\Coding\MainDirectory")
+    #os.chdir(r"C:\Users\Troti\Desktop\Insight\Coding\MainDirectory")
     
     check_files()
     
