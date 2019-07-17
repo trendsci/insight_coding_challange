@@ -24,6 +24,19 @@ def create_output_file(output_file_path):
     with open(output_file_path, 'w') as f:
         write_output(f,"department_id,number_of_orders,number_of_first_orders,percentage\n")
         
+        
+def sort_and_write_output_file(department_counts_dict, output_file_path):
+    """ sort department_counts_dict based on department_id and write the data to file """
+    for department_id in sorted(department_counts_dict):
+        data = department_counts_dict[department_id]
+        to_write = "{},{},{},{}\n".format(department_id, data[0],data[1],data[2])
+        try:
+            with open(output_file_path, 'a+') as output_file:
+                #output_file.write(to_write)
+                write_output(output_file,to_write)
+        except Exception as e:
+            print(e)
+        
 def get_products_dict(file_path):
     """
     Parses the products file into a dictionary:
@@ -79,25 +92,27 @@ def count_orders_per_deparment_id(product_id_dict, order_file_path, output_file_
         with open(order_file_path, 'r') as order_file:
             next(order_file) # skip header
             for order in order_file:
+                # Get information about current order
                 order_id, product_id, add_to_cart_order, reordered_flag = order.strip().split(',')
                 product_id = int(product_id)
                 reordered_flag = int(reordered_flag)
-                # Checking if this is a re-order of product
-                # data source has reordered_flag: 1 = reordered, 0 = new order
+                # Check if this is a re-order of product
+                # Data source has reordered_flag: 1 = reordered, 0 = new order
                 # We are counting how many new orders there are so:
                 # Make new_order_flag: 1 = new order, 0 = reordered;
+                # If confident that reorder_flag is always 1 or 0 can use a shorter code:
+                # new_order_flag = 1-int(reordered_flag)
                 if reordered_flag == 1:
                     new_order_flag = 0
                 elif reordered_flag == 0:
                     new_order_flag = 1
                 else:
                     raise ValueError("Reorder flag can only be 1 or 0, but found flag = {}".format(reordered_flag))
-                #new_order_flag = 1-int(reordered_flag)
                 
                 try:
-                    # get product listing of product id in currently processed order
+                    # Get product listing of product_id in currently processed order
                     product_listing = product_id_dict[product_id]
-                    # get department_id from product listing
+                    # Get department_id from product listing, department_id is the last value
                     department_id = int(product_listing[-1])
                     try:                        
                         # Check if we have seen this department already
@@ -107,47 +122,28 @@ def count_orders_per_deparment_id(product_id_dict, order_file_path, output_file_
                             # increment number of NEW orders in department by 1
                             department_counts_dict[department_id][1] += new_order_flag
                             
-                        # Create new department if neeeded.
+                        # Create new department if we haven't encountered it yet
                         else:      
                             # set number of orders in deparment to 1 
                             # and reorders to new_order_flag of current product
                             department_counts_dict[department_id] = [1,new_order_flag]
                             
                     except Exception as e:
-                        # remember to test/try to catch any non int new order flags.
                         print(e)
                 except Exception as e:
                     print(e)
         
-        # calculate % new orders:
-        for key in department_counts_dict:
+        # Calculate percent new orders:
+        for department_id in department_counts_dict:
             percentage_new_orders = "{:.2f}".format(
-            round(float(department_counts_dict[key][-1])/department_counts_dict[key][-2],2)
-            )
-            department_counts_dict[key].append(percentage_new_orders)
+            round(float(department_counts_dict[department_id][-1])/department_counts_dict[department_id][-2],2))
+            department_counts_dict[department_id].append(percentage_new_orders)
         
-        for key in sorted(department_counts_dict):
-            data = department_counts_dict[key]
-            to_write = "{},{},{},{}\n".format(key, data[0],data[1],data[2])
-            try:
-                with open(output_file_path, 'a+') as output_file:
-                    #output_file.write(to_write)
-                    write_output(output_file,to_write)
-            except Exception as e:
-                print(e)
-                #print("No file yet")
-                #with open(output_file_path, 'w') as output_file:
-                #    output_file.write(to_write)
-                
-        #return department_counts_dict
-
+        return department_counts_dict
+                   
     except Exception as e:
         print(e)
-
-
-
-        
-        
+ 
 def run_analysis():
     """
     This script analyzes the 2017 Instacard data and 
@@ -163,7 +159,6 @@ def run_analysis():
     Original Insight instructions:
     https://github.com/InsightDataScience/Purchase-Analytics  
     """
-
     # Get file paths from command line or can predefine in script.
     order_file_path, products_file_path, output_file_path = parse_filenames()
     
@@ -174,12 +169,12 @@ def run_analysis():
     product_dict = get_products_dict(products_file_path)
     
     # Run analysis script
-    count_orders_per_deparment_id(product_dict,order_file_path=order_file_path,output_file_path=output_file_path)
+    department_counts_dict = count_orders_per_deparment_id(
+        product_dict, order_file_path=order_file_path, output_file_path=output_file_path)
     
-    #calculate_percentage_new_orders()
-    #sort_analysis_result()
+    # Sort analysis results and write output file
+    sort_and_write_output_file(department_counts_dict,output_file_path)
     
-
 if __name__ == "__main__":
     run_analysis()
    
