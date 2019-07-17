@@ -23,13 +23,13 @@ Navigate to root directory (./insight_shnitkind/) and run run.sh or excecute the
 python ./src/purchase_analytics.py ./input/order_products.csv ./input/products.csv ./output/report.csv
 ```
 
-Program takes 3 arguments:
+The script takes 3 arguments:
 1. order information file location
 2. product listing file location
 3. desired output file location
 
 ## Testing
-A simple test is provided that test the entire script for correct output. To excecute, navigate to root directory (./insight_shnitkind/) and run:
+A simple test is provided that tests the entire script for correct output. To excecute, navigate to root directory (./insight_shnitkind/) and run:
 ```bash
 python -m unittest discover -s ./insight_testsuite/tests/test_integration_1/
 ```
