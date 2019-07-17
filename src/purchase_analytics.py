@@ -1,86 +1,144 @@
-## analysis
 from __future__ import print_function
-import os, sys
-    
-def check_files(order_file_path,products_file_path,output_file_path):
-    with open(output_file_path, 'w') as f:
-        f.write("department_id,number_of_orders,number_of_first_orders,percentage\n")
+import sys
 
-def get_products_dict(file_path,verbose=0,print_error=1):
+def write_output(file_object,data):
+        file_object.write(data)
+
+def parse_filenames():
+    """Get file names for input files containing orders and product_listings,
+       and output file with analysis results.
+       
+       return order_file_path, products_file_path, output_file_path
+    """
+    try:
+        order_file_path = sys.argv[1]
+        products_file_path = sys.argv[2]
+        output_file_path = sys.argv[3]     
+    except Exception as e:
+        print(e)
+    
+    return order_file_path, products_file_path, output_file_path
+
+def create_output_file(output_file_path):
+    """ Create output file with correct headers """
+    with open(output_file_path, 'w') as f:
+        write_output(f,"department_id,number_of_orders,number_of_first_orders,percentage\n")
+        
+def get_products_dict(file_path):
+    """
+    Parses the products file into a dictionary:
+    
+    Source products*.csv file format:
+     product_id,product_name,aisle_id,department_id
+     type:
+     int, string, int, int
+     example:
+     1,Chocolate Sandwich Cookies,61,19
+    
+    Products entries formatted incorrectly are skipped.
+    
+    return product_id_dict {product_id : [product_name, aisle_id, department_id]}
+    """
     product_id_dict = {}
     try:
         with open(file_path, 'r') as product_file:
+            next(product_file) # skip header
+            
             for product in product_file:
-                
-                product_split_line = product.strip().split(',')
-                if verbose: print(product_split_line)
+                # Try to get product info.
+                # If invalid entry, print error and move to next product.
                 try:
+                    # Split product into: [product_id, product_name, aisle_id, department_id]
+                    product_split_line = product.strip().split(',')
+                    # Add product to product dictionary. 
+                    # {key = int(product_id): value = [product_name, aisle_id, department_id]}
                     product_id_dict[int(product_split_line[0])] = product_split_line[1:]
                 except Exception as e:
                     print(e)
-                    #pass
-        if verbose: print(product_id_dict)
+                    
     except Exception as e:
-        if print_error: print(e)
+        print(e)
     return product_id_dict
 
 
-def assign_product_dept(product_dict, order_file_path, output_file_path, verbose=0,print_error=1):
+def count_orders_per_deparment_id(product_id_dict, order_file_path, output_file_path):
     """
-    This file does what? 
+    Takes product_id_dict, orders file path, and output file path.
+    
+    product_id_dict format:
+    {product_id : [product_name, aisle_id, department_id]}
+    
+    order_file_path points to a csv file with format:
+    order_id,product_id,add_to_cart_order,reordered
     """
-    #department_order_dict format:
-    #department_id, [number_of_orders,number_of_first_orders,percentage]
-    department_order_dict = {}
+    # department_counts_dict to contain order information for each department_id, format:
+    # {department_id: [number_of_orders,number_of_first_orders,percentage_of_new_orders]}
+    department_counts_dict = {}
     try:
+        # Begin processing orders
         with open(order_file_path, 'r') as order_file:
+            next(order_file) # skip header
             for order in order_file:
-                if verbose: print (order)
-                order_split_line = order.strip().split(',')
-                if verbose: print (order_split_line)
+                order_id, product_id, add_to_cart_order, reordered_flag = order.strip().split(',')
+                product_id = int(product_id)
+                # Checking if this is a re-order of product
+                # data source has reordered_flag: 1 = reordered, 0 = new order
+                # We are counting how many new orders there are so:
+                # Make new_order_flag: 1 = new order, 0 = reordered;
+                if reordered_flag == 1:
+                    new_order_flag = 0
+                elif reordered_flag == 0:
+                    new_order_flag = 0
+                else:
+                    raise ValueError("Reorder flag can only be 1 or 0, but found flag = {}".format(reordered_flag))
+                #new_order_flag = 1-int(reordered_flag)
+                
                 try:
-                    dept = product_dict[int(order_split_line[1])]
-                    department_id = int(dept[-1])
-
-                    order_split_line.append(department_id)
-                    if verbose: print(order_split_line)
-                    try: #have we created this department already?
-                        val = int(order_split_line[-2])
-                        if department_id in department_order_dict:
-                            if verbose: print("in {}. {}".format(department_id,val))
-                            department_order_dict[department_id][0] += 1
-                            department_order_dict[department_id][1] += 1-val
-                        else:
+                    # get product listing of product id in currently processed order
+                    product_listing = product_id_dict[product_id]
+                    # get department_id from product listing
+                    department_id = int(product_listing[-1])
+                    try:                        
+                        # Check if we have seen this department already
+                        if department_id in department_counts_dict:
+                            # increment number of orders in department by 1
+                            department_counts_dict[department_id][0] += 1
+                            # increment number of NEW orders in department by 1
+                            department_counts_dict[department_id][1] += new_order_flag
                             
-                            if verbose: print("not in {}. {}".format(department_id,val))
-                            department_order_dict[department_id] = [1,1-val]
+                        # Create new department if neeeded.
+                        else:      
+                            # set number of orders in deparment to 1 
+                            # and reorders to new_order_flag of current product
+                            department_counts_dict[department_id] = [1,new_order_flag]
+                            
                     except Exception as e:
                         # remember to test/try to catch any non int new order flags.
-                        if print_error: print(e)
+                        print(e)
                 except Exception as e:
-                    if print_error: print(e)
-                        #pass
-        #print(department_order_dict)
+                    print(e)
         
         # calculate % new orders:
-        for key in department_order_dict:
-            percentage_new_orders = round(float(department_order_dict[key][-1])/department_order_dict[key][-2],2)
-            department_order_dict[key].append(percentage_new_orders)
+        for key in department_counts_dict:
+            percentage_new_orders = "{:.2f}".format(
+            round(float(department_counts_dict[key][-1])/department_counts_dict[key][-2],2)
+            )
+            department_counts_dict[key].append(percentage_new_orders)
         
-        if verbose: print("department_id,number_of_orders,number_of_first_orders,percentage")
-        for key in sorted(department_order_dict):
-            data = department_order_dict[key]
+        for key in sorted(department_counts_dict):
+            data = department_counts_dict[key]
             to_write = "{},{},{},{}\n".format(key, data[0],data[1],data[2])
             try:
                 with open(output_file_path, 'a+') as output_file:
-                    if verbose: print(to_write)
-                    output_file.write(to_write)
+                    #output_file.write(to_write)
+                    write_output(output_file,to_write)
             except Exception as e:
-                print("No file yet")
-                with open(output_file_path, 'w') as output_file:
-                    output_file.write(to_write)
+                print(e)
+                #print("No file yet")
+                #with open(output_file_path, 'w') as output_file:
+                #    output_file.write(to_write)
                 
-        return department_order_dict
+        #return department_counts_dict
 
     except Exception as e:
         print(e)
@@ -89,41 +147,38 @@ def assign_product_dept(product_dict, order_file_path, output_file_path, verbose
 
         
         
-def main():
+def run_analysis():
+    """
+    This script analyzes the 2017 Instacard data and 
+    returns a csv file that lists how many times a product was ordered from each deparment,
+    how many of these orders were a first-time order, and percentage of reorders.
+    
+    Instracart 2017 data available here:
+    https://www.instacart.com/datasets/grocery-shopping-2017
+    
+    Data format is specified here:
+    https://gist.github.com/jeremystan/c3b39d947d9b88b3ccff3147dbcf6c6b
+    
+    Original Insight instructions:
+    https://github.com/InsightDataScience/Purchase-Analytics  
+    """
 
-    # Set up file paths from command line or predefined in script.
-    try:
-        order_file_path = sys.argv[1]
-    except:
-        print("eeeeeeeeeeeee")
-        order_file_path = "order_products.csv"
-        #order_file_path = "Big\order_products__train.csv"
-        #order_file_path = "Big\order_products__prior.csv"
-        
-    try:
-        products_file_path = sys.argv[2]
-    except:
-        print("eeeeeeeeeeeee")
-        products_file_path = "Big\products.csv" #"products.csv" 
-
-    try:
-        output_file_path = sys.argv[3]
-        
-    except:
-        print("eeee")
-        output_file_path = "output_file.csv"
+    # Get file paths from command line or can predefine in script.
+    order_file_path, products_file_path, output_file_path = parse_filenames()
     
-    #os.chdir(r"C:\Users\Troti\Desktop\Insight\Coding\MainDirectory")
+    # Create output file with headers
+    create_output_file(output_file_path)
     
-    check_files(order_file_path,products_file_path,output_file_path)
-    
+    # Get dictionary with product_id key and value of [product_name, aisle_id, department_id]
     product_dict = get_products_dict(products_file_path)
     
-    assign_product_dept(product_dict,order_file_path=order_file_path,output_file_path=output_file_path)
+    # Run analysis script
+    count_orders_per_deparment_id(product_dict,order_file_path=order_file_path,output_file_path=output_file_path)
     
-    #raw_input("Program_Finished (ok?): ")
-
+    #calculate_percentage_new_orders()
+    #sort_analysis_result()
+    
 
 if __name__ == "__main__":
-    main()
+    run_analysis()
    
