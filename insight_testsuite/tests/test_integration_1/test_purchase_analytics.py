@@ -14,7 +14,7 @@ class Test_entire_script(unittest.TestCase):
     testing_products_file_name = r".\insight_testsuite\tests\test_integration_1\input\test_products.csv"
     #testing_products_file_name = r".\testing\test_files\test_products_wrongformat.csv"
     testing_orders_file_name = r".\insight_testsuite\tests\test_integration_1\input\test_orders.csv"
-    testing_gold_output_file_name = r".\insight_testsuite\tests\test_integration_1\input\test_gold_output.csv"
+    testing_gold_output_file_name = r".\insight_testsuite\tests\test_integration_1\output\test_gold_output.csv"
     testing_output_file_name = r".\insight_testsuite\tests\test_integration_1\output\report.csv"
     
     # Clear old data from the generated output file
