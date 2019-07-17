@@ -81,6 +81,7 @@ def count_orders_per_deparment_id(product_id_dict, order_file_path, output_file_
             for order in order_file:
                 order_id, product_id, add_to_cart_order, reordered_flag = order.strip().split(',')
                 product_id = int(product_id)
+                reordered_flag = int(reordered_flag)
                 # Checking if this is a re-order of product
                 # data source has reordered_flag: 1 = reordered, 0 = new order
                 # We are counting how many new orders there are so:
@@ -88,7 +89,7 @@ def count_orders_per_deparment_id(product_id_dict, order_file_path, output_file_
                 if reordered_flag == 1:
                     new_order_flag = 0
                 elif reordered_flag == 0:
-                    new_order_flag = 0
+                    new_order_flag = 1
                 else:
                     raise ValueError("Reorder flag can only be 1 or 0, but found flag = {}".format(reordered_flag))
                 #new_order_flag = 1-int(reordered_flag)
