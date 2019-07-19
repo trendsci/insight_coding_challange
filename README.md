@@ -1,10 +1,10 @@
-# Insight coding challange - Submission by Sergey Shnitkind
-Insight coding challenge - Instacart dataset
+# Insight coding challange - by Sergey Shnitkind
+Insight coding challenge - analyze the Instacart dataset
 Submitted July 2019
 
 ## Purcase analytics
 
-Purchase analytics is a script that takes order and product information from the Instacard 2017 database 
+Purchase analytics is a script that takes order and product information from the Instacart 2017 database 
 and outputs a csv file with the number of orders per department, how many orders are new (not a re-order), 
 and percentage of new orders from total orders.
 
