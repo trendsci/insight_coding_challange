@@ -146,7 +146,7 @@ def count_orders_per_deparment_id(product_id_dict, order_file_path, output_file_
  
 def run_analysis():
     """
-    This script analyzes the 2017 Instacard data and 
+    This script analyzes the 2017 Instacart data and 
     returns a csv file that lists how many times a product was ordered from each deparment,
     how many of these orders were a first-time order, and percentage of reorders.
     
